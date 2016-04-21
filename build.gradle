@@ -1,0 +1,103 @@
+group 'io.advantageous.metrik'
+version '0.1.0'
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'idea'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+
+    mavenLocal()
+    mavenCentral()
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.11'
+}
+test.onlyIf { !Boolean.getBoolean('skip.tests') }
+
+
+dependencies {
+    compile 'io.advantageous.reakt:reakt:2.5.0.RELEASE'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
+
+signing {
+    required false
+    sign configurations.archives
+}
+
+
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                try {
+                    authentication(userName: sonatypeUsername, password: sonatypePassword)
+                } catch (MissingPropertyException ignore) {
+                }
+            }
+
+            pom.project {
+                packaging 'jar'
+                name project.name
+                description """
+Interfaces for gathering runtime metrics, KPIs, and other stats for Microservice
+Container Development. Supports Consul, StatsD, InfluxDB and more.
+"""
+
+                url 'https://github.com/advantageous/metrik'
+
+                scm {
+                    url 'scm:git@github.com:advantageous/metrik.git'
+                    connection 'scm:git@github.com:advantageous/metrik.git'
+                    developerConnection 'scm:git@github.com:advantageous/metrik.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'richardHightower'
+                        name 'Richard Hightower'
+                    }
+                    developer {
+                        id 'sailorgeoffrey'
+                        name 'Geoffrey Chandler'
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
